@@ -1,13 +1,9 @@
 <!DOCTYPE html>
-
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <title>Scroll Stack Animation Top to Bottom</title>
-
+    <title></title>
     <style>
       body {
         font-family: sans-serif;
@@ -15,6 +11,13 @@
         padding: 0;
         height: 150vh;
         background-color: transparent;
+        /* Hide scrollbar but keep functionality */
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+      }
+
+      body::-webkit-scrollbar {
+        display: none;
       }
 
       .content {
@@ -168,8 +171,63 @@
         opacity: 1;
       }
 
-      /* Responsive design */
+      /* Scroll Down Heading */
+      .scroll-down-heading {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        z-index: 10;
+      }
 
+      .scroll-down-text {
+        font-size: 16px;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+
+      .scroll-arrow {
+        width: 2px;
+        height: 30px;
+        background-color: #666;
+        margin: 0 auto;
+        position: relative;
+        animation: scrollBounce 2s infinite;
+      }
+
+      .scroll-arrow::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: -3px;
+        width: 0;
+        height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 8px solid #666;
+      }
+
+      @keyframes scrollBounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-10px);
+        }
+        60% {
+          transform: translateY(-5px);
+        }
+      }
+
+      /* Responsive design */
       @media (max-width: 768px) {
         .stack-container {
           width: 90%;
@@ -198,33 +256,33 @@
           left: 226px;
           position: absolute;
         }
+
+        .scroll-down-text {
+          font-size: 14px;
+        }
+
+        .scroll-arrow {
+          height: 25px;
+        }
       }
     </style>
   </head>
-
   <body>
     <div class="content">
       <div class="stack-container" aria-label="Image stack animation">
         <div class="stack-item-wrapper position-0" id="wrapper-1">
           <img src="./icon_1.png" alt="Stack Item 1" class="stack-item" />
-
           <div class="text-content">
             <div class="stack-line">
               _____
-
               <span class="dot"></span>
             </div>
-
             <div class="text-content-wrapper">
               <p class="heading-2">Automation — Your 24/7 Growth Assistant</p>
-
               <p></p>
-
               <ul>
                 <li class="list-item">AI-powered outbound sequences</li>
-
                 <li class="list-item">CRM + campaign automation</li>
-
                 <li class="list-item">
                   Auto-tracked replies & meeting booking
                 </li>
@@ -232,25 +290,18 @@
             </div>
           </div>
         </div>
-
         <div class="stack-item-wrapper position-1" id="wrapper-2">
           <img src="./icon_2.png" alt="Stack Item 2" class="stack-item" />
-
           <div class="text-content">
             <div class="stack-line">
               _____
-
               <span class="dot"></span>
             </div>
-
             <div class="text-content-wrapper">
               <p class="heading-2">Amplification — Precision at Scale</p>
-
               <ul>
                 <li class="list-item">Verified, enriched segmented leads</li>
-
                 <li class="list-item">Real-time ABM triggers</li>
-
                 <li class="list-item">
                   Multi-channel delivery: email, LinkedIn, phone
                 </li>
@@ -258,25 +309,18 @@
             </div>
           </div>
         </div>
-
         <div class="stack-item-wrapper position-2" id="wrapper-3">
           <img src="./icon_3.png" alt="Stack Item 3" class="stack-item" />
-
           <div class="text-content">
             <div class="stack-line">
               _____
-
               <span class="dot"></span>
             </div>
-
             <div class="text-content-wrapper">
               <p class="heading-2">Augmentation — Conversations That Convert</p>
-
               <ul>
                 <li class="list-item">Hyper-personalized 1:1 messaging</li>
-
                 <li class="list-item">Smart copy + auto A/B testing</li>
-
                 <li class="list-item">Intelligent nurture + reply triage</li>
               </ul>
             </div>
@@ -285,14 +329,18 @@
       </div>
     </div>
 
+    <!-- Scroll Down Heading -->
+    <div class="scroll-down-heading">
+      <div class="scroll-down-text">Scroll Down</div>
+      <div class="scroll-arrow"></div>
+    </div>
+
     <script>
       document.addEventListener("DOMContentLoaded", () => {
         const stackWrappers = Array.from(
           document.querySelectorAll(".stack-item-wrapper")
         );
-
         const totalItems = stackWrappers.length;
-
         let previousPositions = {};
 
         function updateStack() {
@@ -300,15 +348,12 @@
           const windowHeight = window.innerHeight;
           const docHeight = document.documentElement.scrollHeight;
           const maxScroll = docHeight - windowHeight;
-
           let scrollProgress = scrollY / maxScroll;
           scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
-
           const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
 
           stackWrappers.forEach((wrapper, i) => {
             const previousPosition = previousPositions[wrapper.id];
-
             wrapper.classList.remove(
               "position-0",
               "position-1",
@@ -317,9 +362,7 @@
               "hidden",
               "hidden-position-class"
             );
-
             const stackPosition = i - itemsToMove;
-
             if (i < itemsToMove) {
               if (i === totalItems - 1) {
                 wrapper.classList.add("position-2");
@@ -327,7 +370,6 @@
                 if (textContent) {
                   textContent.classList.add("opacity-1");
                 }
-
                 previousPositions[wrapper.id] = "position-2";
               } else {
                 wrapper.classList.add("hidden");
@@ -341,7 +383,6 @@
                 if (textContent) {
                   textContent.classList.remove("opacity-1");
                 }
-
                 previousPositions[wrapper.id] = currentPosition;
               } else {
                 wrapper.classList.add("hidden");
@@ -352,29 +393,23 @@
         }
 
         let ticking = false;
-
         function onScroll() {
           if (!ticking) {
             requestAnimationFrame(() => {
               updateStack();
-
               ticking = false;
             });
-
             ticking = true;
           }
         }
 
         window.addEventListener("scroll", onScroll);
-
         window.addEventListener("resize", updateStack);
 
         // Initialize previous positions
-
         stackWrappers.forEach((wrapper, i) => {
           previousPositions[wrapper.id] = `position-${i}`;
         });
-
         updateStack();
       });
     </script>
