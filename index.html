@@ -5,19 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title></title>
     <style>
+      html {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+        overflow-y: scroll; /* Ensure scrolling works */
+      }
+
       body {
         font-family: sans-serif;
         margin: 0;
         padding: 0;
         height: 150vh;
         background-color: transparent;
-        /* Hide scrollbar but keep functionality */
         -ms-overflow-style: none; /* IE and Edge */
         scrollbar-width: none; /* Firefox */
       }
 
+      html::-webkit-scrollbar,
       body::-webkit-scrollbar {
         display: none;
+        width: 0;
+        height: 0;
+      }
+
+      ::-webkit-scrollbar {
+        display: none;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: transparent;
       }
 
       .content {
@@ -344,11 +366,21 @@
         let previousPositions = {};
 
         function updateStack() {
-          const scrollY = window.scrollY;
+          const scrollY =
+            window.pageYOffset ||
+            document.documentElement.scrollTop ||
+            document.body.scrollTop ||
+            0;
           const windowHeight = window.innerHeight;
-          const docHeight = document.documentElement.scrollHeight;
+          const docHeight = Math.max(
+            document.body.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.clientHeight,
+            document.documentElement.scrollHeight,
+            document.documentElement.offsetHeight
+          );
           const maxScroll = docHeight - windowHeight;
-          let scrollProgress = scrollY / maxScroll;
+          let scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
           scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
           const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
 
@@ -403,7 +435,9 @@
           }
         }
 
-        window.addEventListener("scroll", onScroll);
+        // Multiple event listeners for better compatibility
+        window.addEventListener("scroll", onScroll, { passive: true });
+        document.addEventListener("scroll", onScroll, { passive: true });
         window.addEventListener("resize", updateStack);
 
         // Initialize previous positions
