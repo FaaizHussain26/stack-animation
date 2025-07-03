@@ -1,36 +1,52 @@
 <!DOCTYPE html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <title></title>
+
     <style>
       html {
         -ms-overflow-style: none; /* IE and Edge */
+
         scrollbar-width: none; /* Firefox */
+
         overflow-y: scroll; /* Ensure scrolling works */
       }
 
       body {
         font-family: sans-serif;
+
         margin: 0;
+
         padding: 0;
-        height: 150vh;
+
+        height: 300vh; /* Increased height for slower animation */
+
         background-color: transparent;
+
         -ms-overflow-style: none; /* IE and Edge */
+
         scrollbar-width: none; /* Firefox */
       }
 
       html::-webkit-scrollbar,
       body::-webkit-scrollbar {
         display: none;
+
         width: 0;
+
         height: 0;
       }
 
       ::-webkit-scrollbar {
         display: none;
+
         width: 0 !important;
+
         height: 0 !important;
       }
 
@@ -44,55 +60,84 @@
 
       .content {
         display: flex;
+
         justify-content: center;
+
         align-items: center;
+
         min-height: 100vh;
+
         padding: 50px 0;
       }
 
       .stack-container {
         position: fixed;
+
         top: 50%;
+
         left: 50%;
+
         transform: translate(-50%, -50%);
+
         width: 500px;
+
         height: 200px;
+
         cursor: pointer;
       }
 
       .stack-item-wrapper {
         position: absolute;
+
         top: 0;
+
         left: 0;
+
         width: 100%;
+
         height: 100%;
+
         display: flex;
+
         align-items: center;
+
         opacity: 1;
-        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-          opacity 0.6s ease;
+
+        transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+          opacity 0.8s ease;
+
         user-select: none;
+
         transform: translateY(0px) scale(1);
+
         z-index: 1;
       }
 
       .stack-item {
         width: 400px;
+
         height: 400px;
+
         flex-shrink: 0;
       }
 
       .text-content {
         margin-left: 33px;
+
         margin-top: 55px;
+
         opacity: 0;
-        transition: opacity 0.6s ease;
+
+        transition: opacity 0.8s ease;
       }
 
       .text-content h2 {
         margin: 0;
+
         color: #333;
+
         font-size: 17px;
+
         font-weight: 600;
       }
 
@@ -102,6 +147,7 @@
 
       .stack-item-wrapper.position-0 {
         transform: translateY(-38px) scale(1);
+
         z-index: 3;
       }
 
@@ -111,47 +157,65 @@
 
       .stack-item-wrapper.position-1 {
         transform: translateY(-19px) scale(1);
+
         z-index: 2;
       }
 
       .stack-item-wrapper.position-2 {
         transform: translateY(13px) scale(1);
+
         z-index: 1;
       }
 
       .stack-item-wrapper.moving-up {
         transform: translateY(-100px) scale(0.8);
+
         opacity: 0;
       }
 
       .stack-item-wrapper.hidden {
         transform: translateY(-307px) scale(0.98);
+
         opacity: 0;
       }
 
       .dot {
         height: 7px;
+
         position: absolute;
+
         top: 13px;
+
         left: -1px;
+
         width: 5px;
+
         background-color: black;
+
         border-radius: 50%;
+
         display: inline-block;
-        transition: opacity 0.6s ease;
+
+        transition: opacity 0.8s ease;
       }
 
       .stack-line {
         position: absolute;
+
         top: 65px;
+
         left: 357px;
-        transition: opacity 0.6s ease;
+
+        transition: opacity 0.8s ease;
       }
 
       .heading-2 {
         font-size: 16px;
+
         font-weight: 600;
+
         margin-left: 30px;
+
         width: 600px;
       }
 
@@ -161,31 +225,49 @@
 
       .text-content-wrapper {
         border-left: 1px solid #000;
+
         width: 330px;
+
         top: 46px;
+
         left: 401px;
+
         position: absolute;
       }
 
       .text-content-wrapper::before {
         content: "";
+
         position: absolute;
+
         top: 0;
+
         border-radius: 5px;
+
         left: 0;
+
         width: 10px;
+
         height: 1px;
+
         background-color: #000;
       }
 
       .text-content-wrapper::after {
         content: "";
+
         position: absolute;
+
         bottom: 0;
+
         border-radius: 5px;
+
         left: 0;
+
         width: 10px;
+
         height: 1px;
+
         background-color: #000;
       }
 
@@ -194,42 +276,66 @@
       }
 
       /* Scroll Down Heading */
+
       .scroll-down-heading {
         position: fixed;
+
         bottom: 80px;
+
         left: 50%;
+
         transform: translateX(-50%);
+
         text-align: center;
+
         z-index: 10;
       }
 
       .scroll-down-text {
         font-size: 16px;
+
         font-weight: 500;
+
         color: #666;
+
         margin-bottom: 10px;
+
         letter-spacing: 1px;
+
         text-transform: uppercase;
       }
 
       .scroll-arrow {
         width: 2px;
+
         height: 30px;
+
         background-color: #666;
+
         margin: 0 auto;
+
         position: relative;
+
         animation: scrollBounce 2s infinite;
       }
 
       .scroll-arrow::after {
         content: "";
+
         position: absolute;
+
         bottom: 0;
+
         left: -3px;
+
         width: 0;
+
         height: 0;
+
         border-left: 4px solid transparent;
+
         border-right: 4px solid transparent;
+
         border-top: 8px solid #666;
       }
 
@@ -241,23 +347,28 @@
         100% {
           transform: translateY(0);
         }
+
         40% {
           transform: translateY(-10px);
         }
+
         60% {
           transform: translateY(-5px);
         }
       }
 
       /* Responsive design */
+
       @media (max-width: 768px) {
         .stack-container {
           width: 90%;
+
           max-width: 400px;
         }
 
         .stack-item {
           width: 200px;
+
           height: 200px;
         }
 
@@ -267,15 +378,21 @@
 
         .stack-line {
           position: absolute;
+
           top: 75px;
+
           left: 183px;
-          transition: opacity 0.6s ease;
+
+          transition: opacity 0.8s ease;
         }
 
         .text-content-wrapper {
           padding: 5px;
+
           top: 46px;
+
           left: 226px;
+
           position: absolute;
         }
 
@@ -289,22 +406,30 @@
       }
     </style>
   </head>
+
   <body>
     <div class="content">
       <div class="stack-container" aria-label="Image stack animation">
         <div class="stack-item-wrapper position-0" id="wrapper-1">
           <img src="./icon_1.png" alt="Stack Item 1" class="stack-item" />
+
           <div class="text-content">
             <div class="stack-line">
               _____
-              <span class="dot"></span>
+
+              <!-- <span class="dot"></span> -->
             </div>
+
             <div class="text-content-wrapper">
               <p class="heading-2">Automation — Your 24/7 Growth Assistant</p>
+
               <p></p>
+
               <ul>
                 <li class="list-item">AI-powered outbound sequences</li>
+
                 <li class="list-item">CRM + campaign automation</li>
+
                 <li class="list-item">
                   Auto-tracked replies & meeting booking
                 </li>
@@ -312,18 +437,25 @@
             </div>
           </div>
         </div>
+
         <div class="stack-item-wrapper position-1" id="wrapper-2">
           <img src="./icon_2.png" alt="Stack Item 2" class="stack-item" />
+
           <div class="text-content">
             <div class="stack-line">
               _____
-              <span class="dot"></span>
+
+              <!-- <span class="dot"></span> -->
             </div>
+
             <div class="text-content-wrapper">
               <p class="heading-2">Amplification — Precision at Scale</p>
+
               <ul>
                 <li class="list-item">Verified, enriched segmented leads</li>
+
                 <li class="list-item">Real-time ABM triggers</li>
+
                 <li class="list-item">
                   Multi-channel delivery: email, LinkedIn, phone
                 </li>
@@ -331,18 +463,25 @@
             </div>
           </div>
         </div>
+
         <div class="stack-item-wrapper position-2" id="wrapper-3">
           <img src="./icon_3.png" alt="Stack Item 3" class="stack-item" />
+
           <div class="text-content">
             <div class="stack-line">
               _____
-              <span class="dot"></span>
+
+              <!-- <span class="dot"></span> -->
             </div>
+
             <div class="text-content-wrapper">
               <p class="heading-2">Augmentation — Conversations That Convert</p>
+
               <ul>
                 <li class="list-item">Hyper-personalized 1:1 messaging</li>
+
                 <li class="list-item">Smart copy + auto A/B testing</li>
+
                 <li class="list-item">Intelligent nurture + reply triage</li>
               </ul>
             </div>
@@ -352,8 +491,10 @@
     </div>
 
     <!-- Scroll Down Heading -->
+
     <div class="scroll-down-heading">
       <div class="scroll-down-text">Scroll Down</div>
+
       <div class="scroll-arrow"></div>
     </div>
 
@@ -362,7 +503,9 @@
         const stackWrappers = Array.from(
           document.querySelectorAll(".stack-item-wrapper")
         );
+
         const totalItems = stackWrappers.length;
+
         let previousPositions = {};
 
         function updateStack() {
@@ -371,53 +514,83 @@
             document.documentElement.scrollTop ||
             document.body.scrollTop ||
             0;
+
           const windowHeight = window.innerHeight;
+
           const docHeight = Math.max(
             document.body.scrollHeight,
+
             document.body.offsetHeight,
+
             document.documentElement.clientHeight,
+
             document.documentElement.scrollHeight,
+
             document.documentElement.offsetHeight
           );
+
           const maxScroll = docHeight - windowHeight;
+
           let scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
+
           scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
+
+          // Slow down the animation by reducing scroll sensitivity
+          scrollProgress = scrollProgress * 0.5; // This makes the animation 50% slower
+
           const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
 
           stackWrappers.forEach((wrapper, i) => {
             const previousPosition = previousPositions[wrapper.id];
+
             wrapper.classList.remove(
               "position-0",
+
               "position-1",
+
               "position-2",
+
               "moving-up",
+
               "hidden",
+
               "hidden-position-class"
             );
+
             const stackPosition = i - itemsToMove;
+
             if (i < itemsToMove) {
               if (i === totalItems - 1) {
                 wrapper.classList.add("position-2");
+
                 const textContent = wrapper.querySelector(".text-content");
+
                 if (textContent) {
                   textContent.classList.add("opacity-1");
                 }
+
                 previousPositions[wrapper.id] = "position-2";
               } else {
                 wrapper.classList.add("hidden");
+
                 previousPositions[wrapper.id] = "hidden";
               }
             } else {
               if (stackPosition <= 2) {
                 const currentPosition = `position-${stackPosition}`;
+
                 wrapper.classList.add(currentPosition);
+
                 const textContent = wrapper.querySelector(".text-content");
+
                 if (textContent) {
                   textContent.classList.remove("opacity-1");
                 }
+
                 previousPositions[wrapper.id] = currentPosition;
               } else {
                 wrapper.classList.add("hidden");
+
                 previousPositions[wrapper.id] = "hidden";
               }
             }
@@ -425,25 +598,33 @@
         }
 
         let ticking = false;
+
         function onScroll() {
           if (!ticking) {
             requestAnimationFrame(() => {
               updateStack();
+
               ticking = false;
             });
+
             ticking = true;
           }
         }
 
         // Multiple event listeners for better compatibility
+
         window.addEventListener("scroll", onScroll, { passive: true });
+
         document.addEventListener("scroll", onScroll, { passive: true });
+
         window.addEventListener("resize", updateStack);
 
         // Initialize previous positions
+
         stackWrappers.forEach((wrapper, i) => {
           previousPositions[wrapper.id] = `position-${i}`;
         });
+
         updateStack();
       });
     </script>
