@@ -147,8 +147,8 @@
 
       .stack-item-wrapper.position-0 {
         transform: translateY(-38px) scale(1);
-
         z-index: 3;
+        transition: transform 0.6s ease, opacity 0.6s ease;
       }
 
       .stack-item-wrapper.position-0 .text-content {
@@ -157,14 +157,14 @@
 
       .stack-item-wrapper.position-1 {
         transform: translateY(-19px) scale(1);
-
         z-index: 2;
+        transition: transform 0.6s ease, opacity 0.6s ease;
       }
 
       .stack-item-wrapper.position-2 {
         transform: translateY(13px) scale(1);
-
         z-index: 1;
+        transition: transform 0.6s ease, opacity 0.6s ease;
       }
 
       .stack-item-wrapper.moving-up {
@@ -174,9 +174,11 @@
       }
 
       .stack-item-wrapper.hidden {
-        transform: translateY(-307px) scale(0.98);
-
+        transform: translateY(-120%) scale(0.9);
         opacity: 0;
+        transition: transform 0.36s ease-in-out, opacity 0.25s ease-in-out;
+        z-index: 0;
+        pointer-events: none;
       }
 
       .dot {
