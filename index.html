@@ -113,29 +113,21 @@
 
       .stack-item {
         width: 400px;
-
         height: 400px;
-
         flex-shrink: 0;
       }
 
       .text-content {
         margin-left: 33px;
-
         margin-top: 55px;
-
         opacity: 0;
-
         transition: opacity 0.8s ease;
       }
 
       .text-content h2 {
         margin: 0;
-
         color: #333;
-
         font-size: 17px;
-
         font-weight: 600;
       }
 
@@ -181,41 +173,27 @@
 
       .dot {
         height: 7px;
-
         position: absolute;
-
         top: 13px;
-
         left: -1px;
-
         width: 5px;
-
         background-color: black;
-
         border-radius: 50%;
-
         display: inline-block;
-
         transition: opacity 0.8s ease;
       }
 
       .stack-line {
         position: absolute;
-
         top: 65px;
-
         left: 357px;
-
         transition: opacity 0.8s ease;
       }
 
       .heading-2 {
         font-size: 16px;
-
         font-weight: 600;
-
         margin-left: 30px;
-
         width: 600px;
       }
 
@@ -319,8 +297,6 @@
         }
       }
 
-      /* Responsive design */
-
       @media (max-width: 768px) {
         .stack-container {
           width: 90%;
@@ -328,8 +304,8 @@
         }
 
         .stack-item {
-          width: 300px;
-          height: 300px;
+          width: 417px;
+          height: 413px;
         }
 
         .text-content h2 {
@@ -343,9 +319,16 @@
         .text-content-wrapper {
           border-left: 1px solid #fff;
           padding: 5px;
-          top: 210px;
-          left: 1px;
+          top: 242px;
+          left: 71px;
           position: absolute;
+        }
+
+        .heading-2 {
+          font-size: 17px;
+          font-weight: 600;
+          margin-left: 30px;
+          width: 600px;
         }
 
         .scroll-down-text {
@@ -354,6 +337,9 @@
 
         .scroll-arrow {
           height: 25px;
+        }
+        .text-content ul {
+          font-size: 19pxs;
         }
         .text-content-wrapper::before {
           display: none;
@@ -466,13 +452,9 @@
 
           const docHeight = Math.max(
             document.body.scrollHeight,
-
             document.body.offsetHeight,
-
             document.documentElement.clientHeight,
-
             document.documentElement.scrollHeight,
-
             document.documentElement.offsetHeight
           );
 
@@ -492,15 +474,10 @@
 
             wrapper.classList.remove(
               "position-0",
-
               "position-1",
-
               "position-2",
-
               "moving-up",
-
               "hidden",
-
               "hidden-position-class"
             );
 
