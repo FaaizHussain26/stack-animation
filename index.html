@@ -231,43 +231,28 @@
         top: 46px;
 
         left: 401px;
-
         position: absolute;
       }
 
       .text-content-wrapper::before {
         content: "";
-
         position: absolute;
-
         top: 0;
-
         border-radius: 5px;
-
         left: 0;
-
         width: 10px;
-
         height: 1px;
-
         background-color: #000;
       }
 
       .text-content-wrapper::after {
         content: "";
-
         position: absolute;
-
         bottom: 0;
-
         border-radius: 5px;
-
         left: 0;
-
         width: 10px;
-
         height: 1px;
-
         background-color: #000;
       }
 
@@ -279,63 +264,40 @@
 
       .scroll-down-heading {
         position: fixed;
-
         bottom: 80px;
-
         left: 50%;
-
         transform: translateX(-50%);
-
         text-align: center;
-
         z-index: 10;
       }
 
       .scroll-down-text {
         font-size: 16px;
-
         font-weight: 500;
-
         color: #666;
-
         margin-bottom: 10px;
-
         letter-spacing: 1px;
-
         text-transform: uppercase;
       }
 
       .scroll-arrow {
         width: 2px;
-
         height: 30px;
-
         background-color: #666;
-
         margin: 0 auto;
-
         position: relative;
-
         animation: scrollBounce 2s infinite;
       }
 
       .scroll-arrow::after {
         content: "";
-
         position: absolute;
-
         bottom: 0;
-
         left: -3px;
-
         width: 0;
-
         height: 0;
-
         border-left: 4px solid transparent;
-
         border-right: 4px solid transparent;
-
         border-top: 8px solid #666;
       }
 
@@ -362,14 +324,12 @@
       @media (max-width: 768px) {
         .stack-container {
           width: 90%;
-
           max-width: 400px;
         }
 
         .stack-item {
-          width: 200px;
-
-          height: 200px;
+          width: 300px;
+          height: 300px;
         }
 
         .text-content h2 {
@@ -377,22 +337,14 @@
         }
 
         .stack-line {
-          position: absolute;
-
-          top: 75px;
-
-          left: 183px;
-
-          transition: opacity 0.8s ease;
+          display: none;
         }
 
         .text-content-wrapper {
+          border-left: 1px solid #fff;
           padding: 5px;
-
-          top: 46px;
-
-          left: 226px;
-
+          top: 210px;
+          left: 1px;
           position: absolute;
         }
 
@@ -402,6 +354,13 @@
 
         .scroll-arrow {
           height: 25px;
+        }
+        .text-content-wrapper::before {
+          display: none;
+        }
+
+        .text-content-wrapper::after {
+          display: none;
         }
       }
     </style>
