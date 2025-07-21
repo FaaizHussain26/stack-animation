@@ -12,18 +12,18 @@
     />
     <style>
       html {
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
-        overflow-y: scroll; /* Ensure scrolling works */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        overflow-y: scroll;
       }
       body {
         font-family: "Inter", sans-serif;
         margin: 0;
         padding: 0;
-        height: 300vh; /* Increased height for slower animation */
+        height: 300vh;
         background-color: transparent;
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
       html::-webkit-scrollbar,
       body::-webkit-scrollbar {
@@ -179,7 +179,6 @@
       .opacity-1 {
         opacity: 1;
       }
-      /* Scroll Down Heading */
       .scroll-down-heading {
         position: fixed;
         bottom: 80px;
@@ -230,6 +229,12 @@
           transform: translateY(-5px);
         }
       }
+
+      /* Animation complete state */
+      .animation-complete {
+        pointer-events: none;
+      }
+
       @media (max-width: 1100px) {
         .stack-container {
           width: 90%;
@@ -299,7 +304,7 @@
           height: 25px;
         }
         .text-content ul {
-          font-size: 19pxs;
+          font-size: 19px;
         }
         .text-content-wrapper::before {
           display: none;
@@ -340,10 +345,7 @@
         <div class="stack-item-wrapper position-0" id="wrapper-1">
           <img src="icon_1.png" alt="Stack Item 1" class="stack-item" />
           <div class="text-content">
-            <div class="stack-line">
-              _____
-              <!-- <span class="dot"></span> -->
-            </div>
+            <div class="stack-line">_____</div>
             <div class="text-content-wrapper">
               <p class="heading-2">Target Acquisition (Intake Layer)</p>
               <ul>
@@ -363,10 +365,7 @@
         <div class="stack-item-wrapper position-1" id="wrapper-2">
           <img src="icon_2.png" alt="Stack Item 2" class="stack-item" />
           <div class="text-content">
-            <div class="stack-line">
-              _____
-              <!-- <span class="dot"></span> -->
-            </div>
+            <div class="stack-line">_____</div>
             <div class="text-content-wrapper">
               <p class="heading-2">Revenue Generation (Core Layer)</p>
               <ul>
@@ -386,10 +385,7 @@
         <div class="stack-item-wrapper position-2" id="wrapper-3">
           <img src="icon_3.png" alt="Stack Item 3" class="stack-item" />
           <div class="text-content">
-            <div class="stack-line">
-              _____
-              <!-- <span class="dot"></span> -->
-            </div>
+            <div class="stack-line">_____</div>
             <div class="text-content-wrapper">
               <p class="heading-2">Growth Management (Control Layer)</p>
               <ul>
@@ -419,6 +415,8 @@
         let isUpdating = false;
         let lastScrollTime = 0;
         let animationFrameId = null;
+        let animationComplete = false;
+        let hasNotifiedParent = false;
 
         function updateStack() {
           if (isUpdating) return;
@@ -443,8 +441,50 @@
             scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
 
             // Slow down the animation by reducing scroll sensitivity
-            scrollProgress = scrollProgress * 1.5; // This makes the animation 50% slower
+            scrollProgress = scrollProgress * 1.5;
             const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
+
+            // Check if animation is complete (all items have been moved)
+            const isAnimationComplete = itemsToMove >= totalItems;
+
+            if (isAnimationComplete && !animationComplete) {
+              animationComplete = true;
+              document.body.classList.add("animation-complete");
+
+              // Notify parent window that animation is complete
+              if (
+                window.parent &&
+                window.parent !== window &&
+                !hasNotifiedParent
+              ) {
+                hasNotifiedParent = true;
+                window.parent.postMessage(
+                  {
+                    type: "stackAnimationComplete",
+                    scrollProgress: scrollProgress,
+                    maxScroll: maxScroll,
+                    currentScroll: scrollY,
+                  },
+                  "*"
+                );
+              }
+            } else if (!isAnimationComplete && animationComplete) {
+              // Animation is no longer complete (user scrolled back up)
+              animationComplete = false;
+              hasNotifiedParent = false;
+              document.body.classList.remove("animation-complete");
+
+              // Notify parent that animation is active again
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage(
+                  {
+                    type: "stackAnimationActive",
+                    scrollProgress: scrollProgress,
+                  },
+                  "*"
+                );
+              }
+            }
 
             stackWrappers.forEach((wrapper, i) => {
               const previousPosition = previousPositions[wrapper.id];
@@ -486,6 +526,20 @@
                 }
               }
             });
+
+            // Send scroll progress to parent for smooth transition
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage(
+                {
+                  type: "stackScrollProgress",
+                  progress: scrollProgress,
+                  isComplete: animationComplete,
+                  scrollY: scrollY,
+                  maxScroll: maxScroll,
+                },
+                "*"
+              );
+            }
           } catch (error) {
             console.error("Error updating stack:", error);
           } finally {
@@ -493,16 +547,48 @@
           }
         }
 
-        // Improved scroll handler with better performance and less interference
+        // Enhanced scroll handler that can forward events when animation is complete
         function onScroll(event) {
           const now = Date.now();
 
-          // Throttle scroll events to reduce interference
+          // Throttle scroll events
           if (now - lastScrollTime < 16) {
-            // ~60fps
             return;
           }
           lastScrollTime = now;
+
+          // If animation is complete and we're at the bottom, forward scroll to parent
+          if (animationComplete) {
+            const scrollY =
+              window.pageYOffset ||
+              document.documentElement.scrollTop ||
+              document.body.scrollTop ||
+              0;
+            const windowHeight = window.innerHeight;
+            const docHeight = Math.max(
+              document.body.scrollHeight,
+              document.body.offsetHeight,
+              document.documentElement.clientHeight,
+              document.documentElement.scrollHeight,
+              document.documentElement.offsetHeight
+            );
+            const maxScroll = docHeight - windowHeight;
+
+            // If we're at or near the bottom and trying to scroll down more
+            if (scrollY >= maxScroll - 10 && event.deltaY > 0) {
+              // Forward the scroll event to parent
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage(
+                  {
+                    type: "forwardScroll",
+                    deltaY: event.deltaY,
+                    deltaX: event.deltaX || 0,
+                  },
+                  "*"
+                );
+              }
+            }
+          }
 
           // Cancel previous animation frame if it exists
           if (animationFrameId) {
@@ -516,15 +602,26 @@
           });
         }
 
-        // Use passive event listeners to improve scroll performance
+        // Listen for messages from parent (for reverse communication)
+        window.addEventListener("message", (event) => {
+          if (event.data.type === "parentScroll") {
+            // Parent is scrolling, we might need to adjust our internal state
+            // This can be used for more advanced synchronization
+          }
+        });
+
+        // Use passive event listeners for better performance
         const scrollOptions = {
           passive: true,
           capture: false,
         };
 
-        // Add event listeners with improved options
+        // Add event listeners
         window.addEventListener("scroll", onScroll, scrollOptions);
         document.addEventListener("scroll", onScroll, scrollOptions);
+
+        // Handle wheel events for better scroll forwarding
+        window.addEventListener("wheel", onScroll, { passive: true });
 
         // Handle resize with debouncing
         let resizeTimeout;
@@ -545,7 +642,7 @@
         // Initial update
         updateStack();
 
-        // Cleanup function for better memory management
+        // Cleanup function
         window.addEventListener("beforeunload", () => {
           if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
