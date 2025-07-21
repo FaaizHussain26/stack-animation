@@ -441,7 +441,7 @@
             scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
 
             // Slow down the animation by reducing scroll sensitivity
-            scrollProgress = scrollProgress * 1.5;
+            scrollProgress = scrollProgress * 0.5;
             const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
 
             // Check if animation is complete (all items have been moved)
@@ -484,6 +484,17 @@
                   "*"
                 );
               }
+            }
+
+            if (itemsToMove === 0) {
+              window.parent.postMessage(
+                {
+                  type: "stackItemsVisibleAgain",
+                  visibleItems: 3,
+                  scrollProgress: scrollProgress,
+                },
+                "*"
+              );
             }
 
             stackWrappers.forEach((wrapper, i) => {
