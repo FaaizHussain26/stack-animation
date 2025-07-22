@@ -24,8 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.documentElement.scrollHeight,
         document.documentElement.offsetHeight
       );
-      const maxScroll = docHeight - windowHeight;
-      let scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
+      const maxScroll = Math.max(1, docHeight - windowHeight);
+      let scrollProgress = scrollY / maxScroll;
       scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
 
       scrollProgress = scrollProgress * 0.5;
@@ -104,10 +104,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  let scrollBuffer = 0;
+
   function handleWheelEvent(event) {
     const now = Date.now();
-    if (now - lastScrollTime < 16) return;
+    if (now - lastScrollTime < 10) return;
     lastScrollTime = now;
+
+    scrollBuffer += event.deltaY;
+    scrollBuffer = Math.max(Math.min(scrollBuffer, 500), -500);
 
     const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     const windowHeight = window.innerHeight;
@@ -118,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.documentElement.scrollHeight,
       document.documentElement.offsetHeight
     );
-    const maxScroll = Math.max(1, docHeight - windowHeight); 
+    const maxScroll = Math.max(1, docHeight - windowHeight);
 
     if (animationComplete && scrollY >= maxScroll - 10 && event.deltaY > 0) {
       if (window.parent && window.parent !== window) {
@@ -134,25 +139,15 @@ document.addEventListener("DOMContentLoaded", () => {
     animationFrameId = requestAnimationFrame(() => {
       updateStack();
       animationFrameId = null;
+      scrollBuffer = 0;
     });
-
-    setTimeout(() => {
-      if (!isUpdating) updateStack();
-    }, 20);
   }
 
-  // Trackpad + modern wheel
   window.addEventListener("wheel", handleWheelEvent, { passive: true });
-
-  // ✅ Mouse wheel support (Windows)
   window.addEventListener("mousewheel", (e) => {
-    handleWheelEvent({
-      deltaY: -e.wheelDelta,
-      deltaX: 0
-    });
+    handleWheelEvent({ deltaY: -e.wheelDelta, deltaX: 0 });
   }, { passive: true });
 
-  // Fallback scroll (keyboard/touch)
   window.addEventListener("scroll", () => {
     if (!isUpdating && !animationFrameId) {
       animationFrameId = requestAnimationFrame(() => {
@@ -162,7 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, { passive: true });
 
-  // Resize
   let resizeTimeout;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimeout);
@@ -171,7 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 50);
   });
 
-  // Init
   stackWrappers.forEach((wrapper, i) => {
     previousPositions[wrapper.id] = `position-${i}`;
   });
