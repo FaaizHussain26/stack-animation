@@ -9,6 +9,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let animationComplete = false;
   let hasNotifiedParent = false;
 
+  // Ensure scroll space exists on mobile
+  const scrollSpace = document.createElement('div');
+  scrollSpace.style.height = '200vh';
+  document.body.appendChild(scrollSpace);
+
   function updateStack() {
     if (isUpdating) return;
     isUpdating = true;
@@ -103,7 +108,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  window.addEventListener("scroll", () => {
+  window.addEventListener("scroll", (event) => {
+    if (!isUpdating && !animationFrameId) {
+      animationFrameId = requestAnimationFrame(() => {
+        updateStack();
+        animationFrameId = null;
+      });
+    }
+  }, { passive: true });
+
+  // Handle aggressive mouse wheel scroll
+  window.addEventListener("wheel", (event) => {
     if (!isUpdating && !animationFrameId) {
       animationFrameId = requestAnimationFrame(() => {
         updateStack();
