@@ -5,32 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalItems = stackWrappers.length;
   let previousPositions = {};
   let isUpdating = false;
-  let lastScrollTime = 0;
   let animationFrameId = null;
   let animationComplete = false;
   let hasNotifiedParent = false;
+  let currentItemIndex = 0;
+  let lastTapTime = 0;
+  let goingForward = true;
 
-  function updateStack() {
+  function updateStackManually(index) {
     if (isUpdating) return;
     isUpdating = true;
 
     try {
-      const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-      const windowHeight = window.innerHeight;
-      const docHeight = Math.max(
-        document.body.scrollHeight,
-        document.body.offsetHeight,
-        document.documentElement.clientHeight,
-        document.documentElement.scrollHeight,
-        document.documentElement.offsetHeight
-      );
-      const maxScroll = Math.max(1, docHeight - windowHeight);
-      let scrollProgress = scrollY / maxScroll;
-      scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
-
-      scrollProgress = scrollProgress * 0.5;
-      const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
-
+      const itemsToMove = index;
       const isAnimationComplete = itemsToMove >= totalItems;
 
       if (isAnimationComplete && !animationComplete) {
@@ -39,12 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (window.parent && window.parent !== window && !hasNotifiedParent) {
           hasNotifiedParent = true;
-          window.parent.postMessage({
-            type: "stackAnimationComplete",
-            scrollProgress,
-            maxScroll,
-            currentScroll: scrollY,
-          }, "*");
+          window.parent.postMessage({ type: "stackAnimationComplete" }, "*");
         }
       } else if (!isAnimationComplete && animationComplete) {
         animationComplete = false;
@@ -52,10 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList.remove("animation-complete");
 
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({
-            type: "stackAnimationActive",
-            scrollProgress,
-          }, "*");
+          window.parent.postMessage({ type: "stackAnimationActive" }, "*");
         }
       }
 
@@ -87,33 +66,36 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       });
-
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: "stackScrollProgress",
-          progress: scrollProgress,
-          isComplete: animationComplete,
-          scrollY,
-          maxScroll,
-        }, "*");
-      }
-    } catch (error) {
-      console.error("[updateStack] Error:", error);
+    } catch (err) {
+      console.error("[updateStackManually] Error:", err);
     } finally {
       isUpdating = false;
     }
   }
 
-  let scrollBuffer = 0;
-
-  function handleWheelEvent(event) {
+  function handleTap() {
     const now = Date.now();
-    if (now - lastScrollTime < 10) return;
-    lastScrollTime = now;
-
-    scrollBuffer += event.deltaY;
-    scrollBuffer = Math.max(Math.min(scrollBuffer, 500), -500);
-
+    if (now - lastTapTime < 400) return; // debounce
+    lastTapTime = now;
+  
+    if (goingForward) {
+      currentItemIndex++;
+      if (currentItemIndex >= totalItems) {
+        currentItemIndex = totalItems;
+        goingForward = false;
+      }
+    } else {
+      currentItemIndex--;
+      if (currentItemIndex <= 0) {
+        currentItemIndex = 0;
+        goingForward = true;
+      }
+    }
+  
+    updateStackManually(currentItemIndex);
+  }
+  // Scroll + Wheel events for non-mobile
+  function updateStackOnScroll() {
     const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     const windowHeight = window.innerHeight;
     const docHeight = Math.max(
@@ -124,44 +106,44 @@ document.addEventListener("DOMContentLoaded", () => {
       document.documentElement.offsetHeight
     );
     const maxScroll = Math.max(1, docHeight - windowHeight);
-
-    if (animationComplete && scrollY >= maxScroll - 10 && event.deltaY > 0) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: "forwardScroll",
-          deltaY: event.deltaY,
-          deltaX: event.deltaX || 0,
-        }, "*");
-      }
-    }
-
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    animationFrameId = requestAnimationFrame(() => {
-      updateStack();
-      animationFrameId = null;
-      scrollBuffer = 0;
-    });
+    const scrollProgress = Math.min(Math.max(scrollY / maxScroll, 0), 1) * 0.5;
+    currentItemIndex = Math.floor(scrollProgress * (totalItems + 1));
+    updateStackManually(currentItemIndex);
   }
 
-  window.addEventListener("wheel", handleWheelEvent, { passive: true });
-  window.addEventListener("mousewheel", (e) => {
-    handleWheelEvent({ deltaY: -e.wheelDelta, deltaX: 0 });
-  }, { passive: true });
+  function isTouchDevice() {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
 
-  window.addEventListener("scroll", () => {
-    if (!isUpdating && !animationFrameId) {
-      animationFrameId = requestAnimationFrame(() => {
-        updateStack();
-        animationFrameId = null;
-      });
-    }
-  }, { passive: true });
+  if (isTouchDevice()) {
+    // Mobile: use tap to advance
+    window.addEventListener("touchstart", handleTap, { passive: true });
+  } else {
+    // Desktop: use scroll and wheel
+    window.addEventListener("scroll", () => {
+      if (!isUpdating && !animationFrameId) {
+        animationFrameId = requestAnimationFrame(() => {
+          updateStackOnScroll();
+          animationFrameId = null;
+        });
+      }
+    }, { passive: true });
+
+    window.addEventListener("wheel", () => {
+      if (!isUpdating && !animationFrameId) {
+        animationFrameId = requestAnimationFrame(() => {
+          updateStackOnScroll();
+          animationFrameId = null;
+        });
+      }
+    }, { passive: true });
+  }
 
   let resizeTimeout;
   window.addEventListener("resize", () => {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => {
-      updateStack();
+      updateStackManually(currentItemIndex);
     }, 50);
   });
 
@@ -170,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   console.log("[Init] Initial updateStack");
-  updateStack();
+  updateStackManually(currentItemIndex);
 
   window.addEventListener("beforeunload", () => {
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
