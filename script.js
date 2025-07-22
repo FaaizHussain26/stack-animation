@@ -5,17 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalItems = stackWrappers.length;
   let previousPositions = {};
   let isUpdating = false;
+  let lastScrollTime = 0;
   let animationFrameId = null;
   let animationComplete = false;
   let hasNotifiedParent = false;
-
-  function normalizeDelta(e) {
-    switch (e.deltaMode) {
-      case 1: return e.deltaY * 16; 
-      case 2: return e.deltaY * 60; 
-      default: return e.deltaY;     
-    }
-  }
 
   function updateStack() {
     if (isUpdating) return;
@@ -35,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
       scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
 
-      scrollProgress *= 0.5;
+      scrollProgress = scrollProgress * 0.5;
       const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
 
       const isAnimationComplete = itemsToMove >= totalItems;
@@ -43,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isAnimationComplete && !animationComplete) {
         animationComplete = true;
         document.body.classList.add("animation-complete");
-        console.log("[updateStack] Animation completed");
 
         if (window.parent && window.parent !== window && !hasNotifiedParent) {
           hasNotifiedParent = true;
@@ -75,7 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (i < itemsToMove) {
           if (i === totalItems - 1) {
             wrapper.classList.add("position-2");
-            wrapper.querySelector(".text-content")?.classList.add("opacity-1");
+            const textContent = wrapper.querySelector(".text-content");
+            if (textContent) textContent.classList.add("opacity-1");
             previousPositions[wrapper.id] = "position-2";
           } else {
             wrapper.classList.add("hidden");
@@ -85,7 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
           if (stackPosition <= 2) {
             const currentPosition = `position-${stackPosition}`;
             wrapper.classList.add(currentPosition);
-            wrapper.querySelector(".text-content")?.classList.remove("opacity-1");
+            const textContent = wrapper.querySelector(".text-content");
+            if (textContent) textContent.classList.remove("opacity-1");
             previousPositions[wrapper.id] = currentPosition;
           } else {
             wrapper.classList.add("hidden");
@@ -103,7 +97,6 @@ document.addEventListener("DOMContentLoaded", () => {
           maxScroll,
         }, "*");
       }
-
     } catch (error) {
       console.error("[updateStack] Error:", error);
     } finally {
@@ -111,8 +104,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function onWheel(event) {
-    const deltaY = normalizeDelta(event);
+  function handleWheelEvent(event) {
+    const now = Date.now();
+    if (now - lastScrollTime < 16) return;
+    lastScrollTime = now;
 
     const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     const windowHeight = window.innerHeight;
@@ -125,39 +120,58 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     const maxScroll = docHeight - windowHeight;
 
-    if (animationComplete && scrollY >= maxScroll - 10 && deltaY > 0) {
+    if (animationComplete && scrollY >= maxScroll - 10 && event.deltaY > 0) {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({
           type: "forwardScroll",
-          deltaY,
+          deltaY: event.deltaY,
           deltaX: event.deltaX || 0,
         }, "*");
       }
     }
 
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-    }
-
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
     animationFrameId = requestAnimationFrame(() => {
       updateStack();
       animationFrameId = null;
     });
+
+    setTimeout(() => {
+      if (!isUpdating) updateStack();
+    }, 20);
   }
 
-  window.addEventListener("wheel", onWheel, { passive: true });
+  // Trackpad + modern wheel
+  window.addEventListener("wheel", handleWheelEvent, { passive: true });
 
-  window.addEventListener("resize", () => {
-    clearTimeout(window._resizeTimeout);
-    window._resizeTimeout = setTimeout(updateStack, 50);
-  });
+  // ✅ Mouse wheel support (Windows)
+  window.addEventListener("mousewheel", (e) => {
+    handleWheelEvent({
+      deltaY: -e.wheelDelta,
+      deltaX: 0
+    });
+  }, { passive: true });
 
-  window.addEventListener("message", (event) => {
-    if (event.data.type === "parentScroll") {
-      console.log("[Message] Received parentScroll");
+  // Fallback scroll (keyboard/touch)
+  window.addEventListener("scroll", () => {
+    if (!isUpdating && !animationFrameId) {
+      animationFrameId = requestAnimationFrame(() => {
+        updateStack();
+        animationFrameId = null;
+      });
     }
+  }, { passive: true });
+
+  // Resize
+  let resizeTimeout;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      updateStack();
+    }, 50);
   });
 
+  // Init
   stackWrappers.forEach((wrapper, i) => {
     previousPositions[wrapper.id] = `position-${i}`;
   });
@@ -167,6 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("beforeunload", () => {
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    clearTimeout(window._resizeTimeout);
+    clearTimeout(resizeTimeout);
   });
 });
