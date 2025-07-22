@@ -5,16 +5,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalItems = stackWrappers.length;
   let previousPositions = {};
   let isUpdating = false;
-  let lastScrollTime = 0;
   let animationFrameId = null;
   let animationComplete = false;
   let hasNotifiedParent = false;
 
+  function normalizeDelta(e) {
+    switch (e.deltaMode) {
+      case 1: return e.deltaY * 16; 
+      case 2: return e.deltaY * 60; 
+      default: return e.deltaY;     
+    }
+  }
+
   function updateStack() {
     if (isUpdating) return;
     isUpdating = true;
-
-    console.log("[updateStack] Called");
 
     try {
       const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -30,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let scrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
       scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
 
-      scrollProgress = scrollProgress * 0.5;
+      scrollProgress *= 0.5;
       const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
 
       const isAnimationComplete = itemsToMove >= totalItems;
@@ -42,11 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (window.parent && window.parent !== window && !hasNotifiedParent) {
           hasNotifiedParent = true;
-          console.log("[postMessage] stackAnimationComplete → parent");
           window.parent.postMessage({
             type: "stackAnimationComplete",
-            scrollProgress: scrollProgress,
-            maxScroll: maxScroll,
+            scrollProgress,
+            maxScroll,
             currentScroll: scrollY,
           }, "*");
         }
@@ -54,13 +58,11 @@ document.addEventListener("DOMContentLoaded", () => {
         animationComplete = false;
         hasNotifiedParent = false;
         document.body.classList.remove("animation-complete");
-        console.log("[updateStack] Animation became active again");
 
         if (window.parent && window.parent !== window) {
-          console.log("[postMessage] stackAnimationActive → parent");
           window.parent.postMessage({
             type: "stackAnimationActive",
-            scrollProgress: scrollProgress,
+            scrollProgress,
           }, "*");
         }
       }
@@ -73,8 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (i < itemsToMove) {
           if (i === totalItems - 1) {
             wrapper.classList.add("position-2");
-            const textContent = wrapper.querySelector(".text-content");
-            if (textContent) textContent.classList.add("opacity-1");
+            wrapper.querySelector(".text-content")?.classList.add("opacity-1");
             previousPositions[wrapper.id] = "position-2";
           } else {
             wrapper.classList.add("hidden");
@@ -84,8 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (stackPosition <= 2) {
             const currentPosition = `position-${stackPosition}`;
             wrapper.classList.add(currentPosition);
-            const textContent = wrapper.querySelector(".text-content");
-            if (textContent) textContent.classList.remove("opacity-1");
+            wrapper.querySelector(".text-content")?.classList.remove("opacity-1");
             previousPositions[wrapper.id] = currentPosition;
           } else {
             wrapper.classList.add("hidden");
@@ -95,15 +95,15 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (window.parent && window.parent !== window) {
-        console.log("[postMessage] stackScrollProgress → parent");
         window.parent.postMessage({
           type: "stackScrollProgress",
           progress: scrollProgress,
           isComplete: animationComplete,
-          scrollY: scrollY,
-          maxScroll: maxScroll,
+          scrollY,
+          maxScroll,
         }, "*");
       }
+
     } catch (error) {
       console.error("[updateStack] Error:", error);
     } finally {
@@ -111,12 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function onScroll(event) {
-    const now = Date.now();
-    if (now - lastScrollTime < 16) return;
-    lastScrollTime = now;
-
-    console.log("[Scroll] Scroll event detected");
+  function onWheel(event) {
+    const deltaY = normalizeDelta(event);
 
     const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     const windowHeight = window.innerHeight;
@@ -129,13 +125,11 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     const maxScroll = docHeight - windowHeight;
 
-    if (animationComplete && scrollY >= maxScroll - 10 && event.deltaY > 0) {
-      console.log("[Scroll] Animation complete and user tried to scroll further");
+    if (animationComplete && scrollY >= maxScroll - 10 && deltaY > 0) {
       if (window.parent && window.parent !== window) {
-        console.log("[postMessage] forwardScroll → parent");
         window.parent.postMessage({
           type: "forwardScroll",
-          deltaY: event.deltaY,
+          deltaY,
           deltaX: event.deltaX || 0,
         }, "*");
       }
@@ -149,45 +143,30 @@ document.addEventListener("DOMContentLoaded", () => {
       updateStack();
       animationFrameId = null;
     });
-
-    setTimeout(() => {
-      if (!isUpdating) {
-        console.log("[Fallback] Triggered updateStack via setTimeout fallback");
-        updateStack();
-      }
-    }, 20);
   }
+
+  window.addEventListener("wheel", onWheel, { passive: true });
+
+  window.addEventListener("resize", () => {
+    clearTimeout(window._resizeTimeout);
+    window._resizeTimeout = setTimeout(updateStack, 50);
+  });
 
   window.addEventListener("message", (event) => {
     if (event.data.type === "parentScroll") {
-      console.log("[Message] Received parentScroll event");
+      console.log("[Message] Received parentScroll");
     }
   });
-
-  const scrollOptions = { passive: true, capture: false };
-  window.addEventListener("scroll", onScroll, scrollOptions);
-  document.addEventListener("scroll", onScroll, scrollOptions);
-  window.addEventListener("wheel", onScroll, { passive: true });
-
-  let resizeTimeout;
-  function onResize() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      console.log("[Resize] Window resized → calling updateStack");
-      updateStack();
-    }, 50);
-  }
-  window.addEventListener("resize", onResize, { passive: true });
 
   stackWrappers.forEach((wrapper, i) => {
     previousPositions[wrapper.id] = `position-${i}`;
   });
 
-  console.log("[Init] Calling initial updateStack");
+  console.log("[Init] Initial updateStack");
   updateStack();
 
   window.addEventListener("beforeunload", () => {
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    clearTimeout(resizeTimeout);
+    clearTimeout(window._resizeTimeout);
   });
 });
