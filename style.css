@@ -253,6 +253,11 @@ html {
     }
   }
   @media (max-width: 767px) {
+    body, html {
+      overflow: hidden;
+      height: 100%;
+      touch-action: manipulation;
+    }
     .stack-container {
       width: 90%;
       max-width: 400px;
@@ -301,6 +306,11 @@ html {
     }
   }
   @media (max-width: 425px) {
+    body, html {
+      overflow: hidden;
+      height: 100%;
+      touch-action: manipulation;
+    }
     .stack-container {
       width: 90%;
       max-width: 400px;
@@ -313,6 +323,11 @@ html {
     }
   }
   @media (max-width: 375px) {
+    body, html {
+      overflow: hidden;
+      height: 100%;
+      touch-action: manipulation;
+    }
     .stack-container {
       width: 90%;
       max-width: 400px;
