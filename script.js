@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.documentElement.scrollHeight,
       document.documentElement.offsetHeight
     );
-    const maxScroll = docHeight - windowHeight;
+    const maxScroll = Math.max(1, docHeight - windowHeight); 
 
     if (animationComplete && scrollY >= maxScroll - 10 && event.deltaY > 0) {
       if (window.parent && window.parent !== window) {
