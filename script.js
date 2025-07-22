@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalItems = stackWrappers.length;
   let previousPositions = {};
   let isUpdating = false;
-  let lastScrollTime = 0;
   let animationFrameId = null;
   let animationComplete = false;
   let hasNotifiedParent = false;
@@ -29,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
       scrollProgress = Math.min(Math.max(scrollProgress, 0), 1);
 
       scrollProgress = scrollProgress * 0.5;
-      const itemsToMove = Math.floor(scrollProgress * (totalItems + 1));
+      const itemsToMove = Math.round(scrollProgress * totalItems);
 
       const isAnimationComplete = itemsToMove >= totalItems;
 
@@ -103,50 +102,6 @@ document.addEventListener("DOMContentLoaded", () => {
       isUpdating = false;
     }
   }
-
-  let scrollBuffer = 0;
-
-  function handleWheelEvent(event) {
-    const now = Date.now();
-    if (now - lastScrollTime < 10) return;
-    lastScrollTime = now;
-
-    scrollBuffer += event.deltaY;
-    scrollBuffer = Math.max(Math.min(scrollBuffer, 500), -500);
-
-    const scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    const windowHeight = window.innerHeight;
-    const docHeight = Math.max(
-      document.body.scrollHeight,
-      document.body.offsetHeight,
-      document.documentElement.clientHeight,
-      document.documentElement.scrollHeight,
-      document.documentElement.offsetHeight
-    );
-    const maxScroll = Math.max(1, docHeight - windowHeight);
-
-    if (animationComplete && scrollY >= maxScroll - 10 && event.deltaY > 0) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: "forwardScroll",
-          deltaY: event.deltaY,
-          deltaX: event.deltaX || 0,
-        }, "*");
-      }
-    }
-
-    if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    animationFrameId = requestAnimationFrame(() => {
-      updateStack();
-      animationFrameId = null;
-      scrollBuffer = 0;
-    });
-  }
-
-  window.addEventListener("wheel", handleWheelEvent, { passive: true });
-  window.addEventListener("mousewheel", (e) => {
-    handleWheelEvent({ deltaY: -e.wheelDelta, deltaX: 0 });
-  }, { passive: true });
 
   window.addEventListener("scroll", () => {
     if (!isUpdating && !animationFrameId) {
